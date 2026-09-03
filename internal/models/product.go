@@ -1,11 +1,21 @@
 package models
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+)
 
 type Product struct {
 	Name   string
 	Price  float64
 	Amount int
+}
+
+func ValidateProduct(p Product) error {
+	if p.Price <= 0 || p.Amount <= 0 {
+		return errors.New("Невалидная информация о товаре")
+	}
+	return nil
 }
 
 func PrintProduct(p Product) {
