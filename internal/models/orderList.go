@@ -86,9 +86,9 @@ func (orderList OrderList) GetOrdersByIds(ids []int) []Order {
 	return orders
 }
 
-func (order Order) GetTotalPrice() float64 {
+func (o Order) GetTotalPrice() float64 {
 	var sum float64
-	for _, p := range order.ProductList {
+	for _, p := range o.ProductList {
 		sum += p.GetTotalPrice()
 	}
 	return sum
