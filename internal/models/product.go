@@ -23,6 +23,6 @@ func PrintProduct(p Product) {
 	fmt.Printf("Название: %s, цена: %.2f, количество: %d\n", p.Name, p.Price, p.Amount)
 }
 
-func GetTotalPrice(p Product) float64 {
+func (p Product) GetTotalPrice() float64 {
 	return p.Price * float64(p.Amount)
 }

@@ -3,6 +3,7 @@ package models
 import (
 	"errors"
 	"fmt"
+	"os"
 )
 
 type OrderList struct {
@@ -19,7 +20,7 @@ func (orderList *OrderList) GetOrderById(id int) (*Order, error) {
 			return &orderList.OrderItems[i], nil
 		}
 	}
-	return nil, errors.New("Заказ по указанному ID не найден")
+	return nil, fmt.Errorf("Ошибка в модуле поисска: %w", os.ErrNotExist)
 }
 
 func (orderList *OrderList) Store(clientName string, productList []Product, status string) error {
@@ -29,8 +30,8 @@ func (orderList *OrderList) Store(clientName string, productList []Product, stat
 		// Эта проверка не даст создать неправильный заказ
 
 		// fmt.Errorf("Ошибка создания добавления заказа в список: %w", os.ErrInvalid)
-		// fmt.Println("Ошибка создания добавления заказа в список")
-		// return err
+		fmt.Println("Ошибка добавления заказа в список")
+		return err
 	}
 	orderList.NextId++
 	orderList.OrderItems = append(orderList.OrderItems, order)
@@ -51,9 +52,12 @@ func (orderList *OrderList) GetOrderPriceById(id int) (float64, error) {
 
 	foundOrder, err := orderList.GetOrderById(id)
 
-	if err != nil {
+	if errors.Is(err, os.ErrNotExist) {
 		return 0, err
 	}
+	// if err != nil {
+	// 	return 0, err
+	// }
 
 	var sum float64
 	for i := range foundOrder.ProductList {
@@ -72,9 +76,20 @@ func (orderList OrderList) GetOrdersByIds(ids []int) []Order {
 
 	for id := range ids {
 		order, err := orderList.GetOrderById(id)
-		if err == nil {
+		// if err == nil {
+		// 	orders = append(orders, *order)
+		// }
+		if !errors.Is(err, os.ErrNotExist) {
 			orders = append(orders, *order)
 		}
 	}
 	return orders
+}
+
+func (order Order) GetTotalPrice() float64 {
+	var sum float64
+	for _, p := range order.ProductList {
+		sum += p.GetTotalPrice()
+	}
+	return sum
 }

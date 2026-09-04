@@ -27,4 +27,6 @@ func FillOrderListWithTestData(orderList *models.OrderList) {
 	orderList.Store("Алеша Попович", productList, "new")
 	orderList.Store("Сергей Иванович", productList, "new")
 	orderList.Store("Сергей Иванович", productList, "new")
+
+	// orderList.Print()
 }

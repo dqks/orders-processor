@@ -39,7 +39,7 @@ func StoreOrder(id int, clientName string, productList []Product, status string)
 		return Order{}, errors.New("Невалидный ID для создания заказа")
 	}
 
-	if len(strings.TrimSpace(clientName)) == 0 || len(productList) == 0 || len(strings.TrimSpace(status)) == 0 {
+	if len(strings.TrimSpace(clientName)) == 0 || len(productList) == 0 {
 		return Order{}, errors.New("Невалидные данные для создания заказа")
 	}
 
@@ -55,4 +55,20 @@ func StoreOrder(id int, clientName string, productList []Product, status string)
 	}
 
 	return Order{ID: id, ClientName: clientName, ProductList: productList, status: status}, nil
+}
+
+func (o Order) ValidateOrder() error {
+	if o.ID < 0 {
+		return errors.New("Невалидный ID заказа")
+	}
+
+	if len(strings.TrimSpace(o.ClientName)) == 0 || len(o.ProductList) == 0 {
+		return errors.New("Невалидные данные заказа")
+	}
+
+	if o.status != "new" && o.status != "completed" && o.status != "error" {
+		return errors.New("Невалидный статус заказа")
+	}
+
+	return nil
 }
