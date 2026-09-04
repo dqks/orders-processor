@@ -3,6 +3,7 @@ package models
 import (
 	"errors"
 	"fmt"
+	"strings"
 )
 
 type Product struct {
@@ -12,7 +13,7 @@ type Product struct {
 }
 
 func ValidateProduct(p Product) error {
-	if p.Price <= 0 || p.Amount <= 0 {
+	if p.Price <= 0 || p.Amount <= 0 || len(strings.TrimSpace(p.Name)) == 0 {
 		return errors.New("Невалидная информация о товаре")
 	}
 	return nil
@@ -20,4 +21,8 @@ func ValidateProduct(p Product) error {
 
 func PrintProduct(p Product) {
 	fmt.Printf("Название: %s, цена: %.2f, количество: %d\n", p.Name, p.Price, p.Amount)
+}
+
+func GetTotalPrice(p Product) float64 {
+	return p.Price * float64(p.Amount)
 }

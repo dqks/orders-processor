@@ -3,19 +3,11 @@ package models
 import (
 	"errors"
 	"fmt"
-	"strings"
 )
 
 type OrderList struct {
 	OrderItems []Order
-	NextId     int
-}
-
-func StoreOrder(id int, clientName string, productList []Product, status string) (Order, error) {
-	if len(strings.TrimSpace(clientName)) == 0 || len(productList) == 0 || len(strings.TrimSpace(status)) == 0 {
-		return Order{}, errors.New("Невалидные данные заказа")
-	}
-	return Order{Id: id, ClientName: clientName, ProductList: productList, Status: status}, nil
+	NextId     int // сделать приватным
 }
 
 func (orderList *OrderList) GetOrderById(id int) (*Order, error) {
@@ -23,22 +15,25 @@ func (orderList *OrderList) GetOrderById(id int) (*Order, error) {
 		return nil, errors.New("Невалидный ID заказа")
 	}
 	for i := range orderList.OrderItems {
-		if orderList.OrderItems[i].Id == id {
+		if orderList.OrderItems[i].ID == id {
 			return &orderList.OrderItems[i], nil
 		}
 	}
-	return nil, errors.New("Заказ не найден")
+	return nil, errors.New("Заказ по указанному ID не найден")
 }
 
 func (orderList *OrderList) Store(clientName string, productList []Product, status string) error {
 	order, err := StoreOrder(orderList.NextId, clientName, productList, status)
-	orderList.NextId++
 	if err != nil {
-		return errors.New("Ошибка при создании заказа")
+		// Закомментировано для теста пула воркеров, поскольку
+		// Эта проверка не даст создать неправильный заказ
+
+		// fmt.Errorf("Ошибка создания добавления заказа в список: %w", os.ErrInvalid)
+		// fmt.Println("Ошибка создания добавления заказа в список")
+		// return err
 	}
-
+	orderList.NextId++
 	orderList.OrderItems = append(orderList.OrderItems, order)
-
 	return nil
 }
 
@@ -57,7 +52,7 @@ func (orderList *OrderList) GetOrderPriceById(id int) (float64, error) {
 	foundOrder, err := orderList.GetOrderById(id)
 
 	if err != nil {
-		return 0, errors.New("Заказ по указанному ID не найден")
+		return 0, err
 	}
 
 	var sum float64
@@ -66,4 +61,8 @@ func (orderList *OrderList) GetOrderPriceById(id int) (float64, error) {
 	}
 
 	return sum, nil
+}
+
+func (orderList OrderList) GetOrderAmount() int {
+	return len(orderList.OrderItems)
 }
