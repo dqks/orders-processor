@@ -66,3 +66,15 @@ func (orderList *OrderList) GetOrderPriceById(id int) (float64, error) {
 func (orderList OrderList) GetOrderAmount() int {
 	return len(orderList.OrderItems)
 }
+
+func (orderList OrderList) GetOrdersByIds(ids []int) []Order {
+	orders := make([]Order, 0, len(ids))
+
+	for id := range ids {
+		order, err := orderList.GetOrderById(id)
+		if err == nil {
+			orders = append(orders, *order)
+		}
+	}
+	return orders
+}
