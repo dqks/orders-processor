@@ -6,8 +6,6 @@ import (
 	"strings"
 )
 
-// 1. Создаем свой тип на базе строки
-
 type Order struct {
 	id          int
 	clientName  string
@@ -15,7 +13,7 @@ type Order struct {
 	status      string
 }
 
-func (o *Order) GetId() int {
+func (o *Order) GetID() int {
 	return o.id
 }
 

@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"orders-processor/internal/appErrors"
-	"os"
 )
 
 type OrderList struct {
@@ -49,7 +48,7 @@ func (orderList *OrderList) GetOrderPriceById(id int) (float64, error) {
 
 	foundOrder, err := orderList.GetOrderById(id)
 
-	if errors.Is(err, os.ErrNotExist) && err != nil {
+	if errors.Is(err, appErrors.ErrOrderNotFound) && err != nil {
 		return 0, err
 	}
 

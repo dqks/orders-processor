@@ -8,7 +8,7 @@ import (
 func ProcessOrders(ordersChan <-chan *models.Order, resultChan chan<- error, n int) {
 	for order := range ordersChan {
 		var err error = nil
-		id := order.GetId()
+		id := order.GetID()
 		productList := order.GetProductList()
 		fmt.Printf("Worker %d начал обработку заказа #%d\n", n, id)
 		// Валидация полей заказа
@@ -23,26 +23,6 @@ func ProcessOrders(ordersChan <-chan *models.Order, resultChan chan<- error, n i
 				fmt.Printf("Worker %d не смог обработать заказ #%d\n", n, id)
 			}
 
-		}
-		// Валидация полей продуктов заказа
-		if err == nil {
-			for _, p := range productList {
-				err = models.ValidateProduct(p)
-				if err != nil {
-					resultChan <- err
-					fmt.Printf("Worker %d не смог обработать заказ #%d\n", n, id)
-					errStatus := order.SetStatus("error")
-					if errStatus != nil {
-						resultChan <- errStatus
-						fmt.Printf("Worker %d не смог обработать заказ #%d\n", n, id)
-					} else {
-						resultChan <- err
-						fmt.Printf("Worker %d не смог обработать заказ #%d\n", n, id)
-					}
-					// Выходим из цикла
-					break
-				}
-			}
 		}
 		// Если все прошло валидацию
 		if err == nil {
