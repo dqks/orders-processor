@@ -11,7 +11,7 @@ type OrderList struct {
 	nextId     int
 }
 
-func (orderList *OrderList) GetOrderById(id int) (*Order, error) {
+func (orderList *OrderList) GetOrderByID(id int) (*Order, error) {
 	if id < 0 {
 		return nil, errors.New("Невалидный id заказа")
 	}
@@ -41,14 +41,10 @@ func (orderList OrderList) Print() {
 	}
 }
 
-func (orderList *OrderList) GetOrderPriceById(id int) (float64, error) {
-	if id < 0 {
-		return 0, errors.New("Заказ по указанному id не найден")
-	}
+func (orderList *OrderList) GetOrderPriceByID(id int) (float64, error) {
+	foundOrder, err := orderList.GetOrderByID(id)
 
-	foundOrder, err := orderList.GetOrderById(id)
-
-	if errors.Is(err, appErrors.ErrOrderNotFound) && err != nil {
+	if errors.Is(err, appErrors.ErrOrderNotFound) || err != nil {
 		return 0, err
 	}
 
@@ -64,11 +60,11 @@ func (orderList OrderList) GetOrderAmount() int {
 	return len(orderList.orderItems)
 }
 
-func (orderList OrderList) GetOrdersByIds(ids []int) []Order {
+func (orderList OrderList) GetOrdersByIDs(ids []int) []Order {
 	orders := make([]Order, 0, len(ids))
 
 	for _, id := range ids {
-		order, err := orderList.GetOrderById(id)
+		order, err := orderList.GetOrderByID(id)
 		if !errors.Is(err, appErrors.ErrOrderNotFound) && err == nil {
 			orders = append(orders, *order)
 		}

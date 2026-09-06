@@ -9,7 +9,7 @@ import (
 func main() {
 	orderList := models.CreateOrderList(10)
 	storage.FillOrderListWithTestData(&orderList)
-	orders := orderList.GetOrdersByIds([]int{1, 2, 3, 4, 5})
+	orders := orderList.GetOrdersByIDs([]int{1, 2, 3, 4, 5})
 	services.ProcessByWorkers[models.Order, error](
 		3,
 		orders,

@@ -70,7 +70,7 @@ func ValidateOrderFields(id int, clientName string, productList []Product, statu
 	}
 
 	for _, p := range productList {
-		err := ValidateProduct(p)
+		err := ValidateProductFields(p.Name, p.Price, p.Amount)
 		if err != nil {
 			return err
 		}
