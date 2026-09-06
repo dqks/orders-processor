@@ -6,25 +6,39 @@ import (
 	"strings"
 )
 
+// 1. Создаем свой тип на базе строки
+
 type Order struct {
-	ID          int
-	ClientName  string
-	ProductList []Product
+	id          int
+	clientName  string
+	productList []Product
 	status      string
 }
 
+func (o *Order) GetId() int {
+	return o.id
+}
+
+func (o *Order) GetClientName() string {
+	return o.clientName
+}
+
+func (o *Order) GetProductList() []Product {
+	return o.productList
+}
+
 func (o Order) Print() {
-	fmt.Printf("ID: %d, клиент: %s, статус: %s\n", o.ID, o.ClientName, o.status)
+	fmt.Printf("id: %d, клиент: %s, статус: %s\n", o.id, o.clientName, o.status)
 	fmt.Println("Товары:")
-	for _, p := range o.ProductList {
+	for _, p := range o.productList {
 		PrintProduct(p)
 	}
 	fmt.Println("")
 }
 
-func (o *Order) UpdateStatus(newStatus string) error {
+func (o *Order) SetStatus(newStatus string) error {
 	if newStatus != "new" && newStatus != "completed" && newStatus != "error" {
-		return errors.New("Получен невалидный статус")
+		return errors.New("Присваивается невалидный статус заказа")
 	}
 	o.status = newStatus
 	return nil
@@ -35,39 +49,33 @@ func (o *Order) GetStatus() string {
 }
 
 func StoreOrder(id int, clientName string, productList []Product, status string) (Order, error) {
+	err := ValidateOrderFields(id, clientName, productList, status)
+
+	if err != nil {
+		return Order{}, err
+	}
+
+	return Order{id: id, clientName: clientName, productList: productList, status: status}, nil
+}
+
+func ValidateOrderFields(id int, clientName string, productList []Product, status string) error {
 	if id < 0 {
-		return Order{}, errors.New("Невалидный ID для создания заказа")
+		return errors.New("Передан невалидный id заказа")
 	}
 
 	if len(strings.TrimSpace(clientName)) == 0 || len(productList) == 0 {
-		return Order{}, errors.New("Невалидные данные для создания заказа")
+		return errors.New("Передан невалидные данные заказа")
 	}
 
 	if status != "new" && status != "completed" && status != "error" {
-		return Order{}, errors.New("Невалидный статус для создания заказа")
+		return errors.New("Передан невалидный статус заказа")
 	}
 
 	for _, p := range productList {
 		err := ValidateProduct(p)
 		if err != nil {
-			return Order{}, err
+			return err
 		}
-	}
-
-	return Order{ID: id, ClientName: clientName, ProductList: productList, status: status}, nil
-}
-
-func (o Order) ValidateOrder() error {
-	if o.ID < 0 {
-		return errors.New("Невалидный ID заказа")
-	}
-
-	if len(strings.TrimSpace(o.ClientName)) == 0 || len(o.ProductList) == 0 {
-		return errors.New("Невалидные данные заказа")
-	}
-
-	if o.status != "new" && o.status != "completed" && o.status != "error" {
-		return errors.New("Невалидный статус заказа")
 	}
 
 	return nil

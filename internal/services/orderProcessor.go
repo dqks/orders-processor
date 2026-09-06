@@ -6,32 +6,59 @@ import (
 )
 
 func ProcessOrders(ordersChan <-chan *models.Order, resultChan chan<- error, n int) {
-	var err error = nil
 	for order := range ordersChan {
-		fmt.Printf("Worker %d начал обработку заказа #%d\n", n, order.ID)
+		var err error = nil
+		id := order.GetId()
+		productList := order.GetProductList()
+		fmt.Printf("Worker %d начал обработку заказа #%d\n", n, id)
 		// Валидация полей заказа
-		err = order.ValidateOrder()
+		err = models.ValidateOrderFields(id, order.GetClientName(), productList, order.GetStatus())
 		if err != nil {
-			resultChan <- err
-			fmt.Printf("Worker %d не смог обработать заказ #%d\n", n, order.ID)
-			order.UpdateStatus("error")
+			errStatus := order.SetStatus("error")
+			if errStatus != nil {
+				resultChan <- errStatus
+				fmt.Printf("Worker %d не смог обработать заказ #%d\n", n, id)
+			} else {
+				resultChan <- err
+				fmt.Printf("Worker %d не смог обработать заказ #%d\n", n, id)
+			}
+
 		}
 		// Валидация полей продуктов заказа
 		if err == nil {
-			for _, p := range order.ProductList {
+			for _, p := range productList {
 				err = models.ValidateProduct(p)
 				if err != nil {
 					resultChan <- err
-					fmt.Printf("Worker %d не смог обработать заказ #%d\n", n, order.ID)
-					order.UpdateStatus("error")
+					fmt.Printf("Worker %d не смог обработать заказ #%d\n", n, id)
+					errStatus := order.SetStatus("error")
+					if errStatus != nil {
+						resultChan <- errStatus
+						fmt.Printf("Worker %d не смог обработать заказ #%d\n", n, id)
+					} else {
+						resultChan <- err
+						fmt.Printf("Worker %d не смог обработать заказ #%d\n", n, id)
+					}
+					// Выходим из цикла
+					break
 				}
 			}
 		}
 		// Если все прошло валидацию
 		if err == nil {
-			order.UpdateStatus("completed")
-			fmt.Printf("Worker %d закончил обработку заказа #%d, его итоговая сумма %.2f\n", n, order.ID, order.GetTotalPrice())
-			resultChan <- nil
+			errStatus := order.SetStatus("completed")
+			if errStatus != nil {
+				resultChan <- errStatus
+				fmt.Printf("Worker %d не смог обработать заказ #%d\n", n, id)
+			} else {
+				resultChan <- nil
+				fmt.Printf("Worker %d закончил обработку заказа #%d, его итоговая сумма %.2f\n", n, id, order.GetTotalPrice())
+			}
+
 		}
 	}
+}
+
+func ProcessOrderResult(err error) {
+	fmt.Println(err)
 }
