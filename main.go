@@ -1,16 +1,19 @@
 package main
 
 import (
-	"orders-processor/internal/models"
+	"orders-processor/internal/order"
 	"orders-processor/internal/services"
 	"orders-processor/internal/storage"
+	"orders-processor/internal/worker"
 )
 
 func main() {
-	orderList := models.CreateOrderList(10)
-	storage.FillOrderListWithTestData(&orderList)
+	orderList := order.CreateOrderList(10)
+	if err := storage.FillOrderListWithTestData(&orderList); err != nil {
+		panic(err)
+	}
 	orders := orderList.GetOrdersByIDs([]int{1, 2, 3, 4, 5})
-	services.ProcessByWorkers[models.Order, error](
+	worker.ProcessByWorkers[order.Order, error](
 		3,
 		orders,
 		services.ProcessOrders,

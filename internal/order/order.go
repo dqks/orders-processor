@@ -1,4 +1,4 @@
-package models
+package order
 
 import (
 	"errors"
@@ -13,15 +13,15 @@ type Order struct {
 	status      string
 }
 
-func (o *Order) GetID() int {
+func (o *Order) ID() int {
 	return o.id
 }
 
-func (o *Order) GetClientName() string {
+func (o *Order) ClientName() string {
 	return o.clientName
 }
 
-func (o *Order) GetProductList() []Product {
+func (o *Order) ProductList() []Product {
 	return o.productList
 }
 
@@ -42,7 +42,7 @@ func (o *Order) SetStatus(newStatus string) error {
 	return nil
 }
 
-func (o *Order) GetStatus() string {
+func (o *Order) Status() string {
 	return o.status
 }
 
@@ -70,11 +70,19 @@ func ValidateOrderFields(id int, clientName string, productList []Product, statu
 	}
 
 	for _, p := range productList {
-		err := ValidateProductFields(p.Name, p.Price, p.Amount)
+		err := ValidateProductFields(p.name, p.price, p.amount)
 		if err != nil {
 			return err
 		}
 	}
 
 	return nil
+}
+
+func (o Order) GetTotalPrice() float64 {
+	var sum float64
+	for _, p := range o.productList {
+		sum += p.GetTotalPrice()
+	}
+	return sum
 }

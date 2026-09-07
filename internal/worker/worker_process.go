@@ -1,4 +1,4 @@
-package services
+package worker
 
 import "sync"
 
@@ -10,7 +10,7 @@ import "sync"
 
 func ProcessByWorkers[J any, R any](
 	workerNum int,
-	jobs []J,
+	jobs []*J,
 	processJobCb func(<-chan *J, chan<- R, int, *sync.WaitGroup),
 	processResultCb func(R)) {
 
@@ -33,7 +33,7 @@ func ProcessByWorkers[J any, R any](
 	}
 
 	for i := 0; i < jobNum; i++ {
-		jobChan <- &jobs[i]
+		jobChan <- jobs[i]
 	}
 
 	close(jobChan)
