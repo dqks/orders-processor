@@ -1,9 +1,17 @@
 package services
 
+import "sync"
+
+// Мы добавили WaitGroup для того, чтобы отслеживать окончание выполнения воркеров
+// Т.к. до этого мы не гарантировали, что после выполнится код после resultChan <- val
+// Выполнится оставшийся код
+// Также мы добавили его для закрытия канала resultChan
+// Чтобы мы могли через range его прочитать, не уходя в дедлок
+
 func ProcessByWorkers[J any, R any](
 	workerNum int,
 	jobs []J,
-	processJobCb func(<-chan *J, chan<- R, int),
+	processJobCb func(<-chan *J, chan<- R, int, *sync.WaitGroup),
 	processResultCb func(R)) {
 
 	if workerNum <= 0 {
@@ -13,9 +21,15 @@ func ProcessByWorkers[J any, R any](
 	jobNum := len(jobs)
 	jobChan := make(chan *J, jobNum)
 	resultChan := make(chan R, jobNum)
+	var wg sync.WaitGroup
 
 	for i := 1; i <= workerNum; i++ {
-		go processJobCb(jobChan, resultChan, i)
+		// Создается workerNum экземпляров processJob
+		// Именно поэтому у нас workerNum групп ожидания
+		// Воркер не заканчивает работу при окончании 1 горутины
+		// Воркеры заканчивают работу после обработки всех данных и закрытом канале
+		wg.Add(1)
+		go processJobCb(jobChan, resultChan, i, &wg)
 	}
 
 	for i := 0; i < jobNum; i++ {
@@ -24,9 +38,26 @@ func ProcessByWorkers[J any, R any](
 
 	close(jobChan)
 
-	for i := 1; i <= jobNum; i++ {
-		processResultCb(<-resultChan)
-	}
+	// Добавляем горутину для отслеживания завершения воркеров
+	// По завершению закрываем канал
+	// Это позволяет не блокировать чтение (которое расположено ниже)
+	// Если бы горутины не было, то мы бы застряли на этом моменте, ожидая завершения всех воркеров
+	// Не читая результаты, а их бы могло накопиться 1000 штук
+	// Т.е. таким образом мы одновременно запускаем чтение с отслеживанием завершения работы воркеров
+	go func() {
+		wg.Wait()
+		// Мы закрываем канал resutChan, чтобы спокойно прочитать данные внутри цикла ниже
+		// И не уйти в дедлок
+		// Если мы его не закроем, то канал будет ожидать данные
+		// А когда все горутины закончатся Go увидит,
+		// Что больше некому передавать по каналу данные и уйдет в дедлок
+		close(resultChan)
+		// Канал всегда закрывается на стороне отправки (продюсера)
+		// и только тогда, когда гарантированно ни одна горутина больше не совершит в него запись.
+		// Получатель (консьюмер) никогда не закрывает канал, из которого читает.
+	}()
 
-	close(resultChan)
+	for result := range resultChan {
+		processResultCb(result)
+	}
 }
