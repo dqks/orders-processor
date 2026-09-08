@@ -22,27 +22,48 @@ func ProcessOrders(ordersChan <-chan *order.Order, resultChan chan<- ProcessResu
 		productList := o.ProductList()
 		fmt.Printf("Worker %d начал обработку заказа #%d\n", n, id)
 		// Валидация полей заказа
-		err = order.ValidateOrderFields(id, o.ClientName(), productList, o.Status())
+		err = order.ValidateOrderFields(
+			id,
+			o.ClientName(),
+			productList,
+			o.Status(),
+		)
 		if err != nil {
-			errStatus := o.SetStatus("error")
-			if errStatus != nil {
+			if errStatus := o.SetStatus("error"); err != nil {
 				resultChan <- ProcessResult{Completed: false, TotalSum: 0}
-				fmt.Printf("Worker %d не смог обработать заказ #%d\n", n, id)
-			} else {
-				resultChan <- ProcessResult{Completed: false, TotalSum: 0}
-				fmt.Printf("Worker %d не смог обработать заказ #%d\n", n, id)
+				fmt.Printf("Worker %d не смог обработать заказ #%d - %s\n",
+					n,
+					id,
+					errStatus,
+				)
+				continue
 			}
+			resultChan <- ProcessResult{Completed: false, TotalSum: 0}
+			fmt.Printf("Worker %d не смог обработать заказ #%d - %s\n",
+				n,
+				id,
+				err,
+			)
+			continue
 		}
 		// Если все прошло валидацию
 		if err == nil {
-			errStatus := o.SetStatus("completed")
-			if errStatus != nil {
+			if errStatus := o.SetStatus("completed"); errStatus != nil {
 				resultChan <- ProcessResult{Completed: false, TotalSum: 0}
-				fmt.Printf("Worker %d не смог обработать заказ #%d\n", n, id)
-			} else {
-				resultChan <- ProcessResult{Completed: true, TotalSum: o.GetTotalPrice()}
-				fmt.Printf("Worker %d закончил обработку заказа #%d, его итоговая сумма %.2f\n", n, id, o.GetTotalPrice())
+				fmt.Printf("Worker %d не смог обработать заказ #%d - %s\n",
+					n,
+					id,
+					errStatus,
+				)
+				continue
 			}
+			resultChan <- ProcessResult{Completed: true, TotalSum: o.GetTotalPrice()}
+			fmt.Printf("Worker %d закончил обработку заказа #%d, его итоговая сумма %.2f\n",
+				n,
+				id,
+				o.GetTotalPrice(),
+			)
+			continue
 		}
 	}
 }

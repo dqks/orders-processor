@@ -34,16 +34,20 @@ func TestProcessOrders(t *testing.T) {
 	tests := []struct {
 		name         string
 		jobs         []*order.Order
-		wantResults  []error
+		wantResults  []ProcessResult
 		wantOutput   []string
 		wantInOutput []string
 		workerID     int
 	}{
 		{
-			name:        "Несколько работ",
-			jobs:        orderList,
-			wantResults: []error{nil, nil, nil},
-			wantOutput:  []string{"", ""},
+			name: "Несколько работ",
+			jobs: orderList,
+			wantResults: []ProcessResult{
+				ProcessResult{Completed: true, TotalSum: 2155},
+				ProcessResult{Completed: true, TotalSum: 2155},
+				ProcessResult{Completed: true, TotalSum: 2155},
+			},
+			wantOutput: []string{"", ""},
 			wantInOutput: []string{"Worker 1 начал обработку заказа #1",
 				"Worker 1 закончил обработку заказа #1, его итоговая сумма 2155.00",
 				"Worker 1 начал обработку заказа #1",
@@ -58,7 +62,7 @@ func TestProcessOrders(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ordersChan := make(chan *order.Order, len(tt.jobs))
-			resultChan := make(chan error, len(tt.jobs))
+			resultChan := make(chan ProcessResult, len(tt.jobs))
 			var wg sync.WaitGroup
 			wg.Add(1)
 
@@ -78,7 +82,7 @@ func TestProcessOrders(t *testing.T) {
 			w.Close()
 			close(resultChan)
 
-			var gotResults []error
+			var gotResults []ProcessResult
 			for result := range resultChan {
 				gotResults = append(gotResults, result)
 			}
@@ -87,7 +91,7 @@ func TestProcessOrders(t *testing.T) {
 			}
 			for i := range gotResults {
 				if gotResults[i] != tt.wantResults[i] {
-					t.Errorf("ProcessOrders() = at index %d: got result %d, want %d", i, gotResults[i], tt.wantResults[i])
+					t.Errorf("ProcessOrders() = at index %d: got result %#v, want %#v", i, gotResults[i], tt.wantResults[i])
 				}
 			}
 

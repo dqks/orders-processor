@@ -69,7 +69,7 @@ func (ol OrderList) GetOrderAmount() int {
 func (ol OrderList) GetOrdersByIDs(ids []int) []*Order {
 	orders := make([]*Order, 0, len(ids))
 
-	for id := range ids {
+	for _, id := range ids {
 		order, err := ol.GetOrderByID(id)
 		if !errors.Is(err, apperrors.ErrOrderNotFound) && err == nil {
 			orders = append(orders, order)
