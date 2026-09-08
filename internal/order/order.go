@@ -3,6 +3,7 @@ package order
 import (
 	"errors"
 	"fmt"
+	"io"
 	"strings"
 )
 
@@ -25,13 +26,13 @@ func (o *Order) ProductList() []Product {
 	return o.productList
 }
 
-func (o Order) Print() {
-	fmt.Printf("id: %d, клиент: %s, статус: %s\n", o.id, o.clientName, o.status)
-	fmt.Println("Товары:")
+func (o Order) Print(w io.Writer) {
+	fmt.Fprintf(w, "id: %d, клиент: %s, статус: %s\n", o.id, o.clientName, o.status)
+	fmt.Fprintln(w, "Товары:")
 	for _, p := range o.productList {
-		PrintProduct(p)
+		PrintProduct(w, p)
 	}
-	fmt.Println("")
+	fmt.Fprintln(w, "")
 }
 
 func (o *Order) SetStatus(newStatus string) error {

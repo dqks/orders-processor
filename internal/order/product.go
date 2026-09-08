@@ -3,6 +3,7 @@ package order
 import (
 	"errors"
 	"fmt"
+	"io"
 	"strings"
 )
 
@@ -27,8 +28,8 @@ func ValidateProductFields(name string, price float64, amount int) error {
 	return nil
 }
 
-func PrintProduct(p Product) {
-	fmt.Printf("Название: %s, цена: %.2f, количество: %d\n", p.name, p.price, p.amount)
+func PrintProduct(w io.Writer, p Product) {
+	fmt.Fprintf(w, "Название: %s, цена: %.2f, количество: %d\n", p.name, p.price, p.amount)
 }
 
 func (p Product) GetTotalPrice() float64 {

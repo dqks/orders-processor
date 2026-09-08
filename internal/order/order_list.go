@@ -3,6 +3,7 @@ package order
 import (
 	"errors"
 	"fmt"
+	"io"
 	appErrors "orders-processor/internal/apperrors"
 )
 
@@ -34,10 +35,10 @@ func (ol *OrderList) Store(clientName string, productList []Product, status stri
 	return nil
 }
 
-func (ol OrderList) Print() {
-	fmt.Println("Список всех заказов:")
+func (ol OrderList) Print(w io.Writer) {
+	fmt.Fprintln(w, "Список всех заказов:")
 	for _, o := range ol.orderItems {
-		o.Print()
+		o.Print(w)
 	}
 }
 
