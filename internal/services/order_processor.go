@@ -29,7 +29,7 @@ func ProcessOrders(ordersChan <-chan *order.Order, resultChan chan<- ProcessResu
 			o.Status(),
 		)
 		if err != nil {
-			if errStatus := o.SetStatus("error"); err != nil {
+			if errStatus := o.SetStatus("error"); errStatus != nil {
 				resultChan <- ProcessResult{Completed: false, TotalSum: 0}
 				fmt.Printf("Worker %d не смог обработать заказ #%d - %s\n",
 					n,
