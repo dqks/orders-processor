@@ -80,6 +80,16 @@ func ValidateOrderFields(id int, clientName string, productList []Product, statu
 	return nil
 }
 
+func (o *Order) SetClientName(clientName string) error {
+	if len(strings.TrimSpace(clientName)) == 0 {
+		return errors.New("Передан невалидное имя клиента")
+	}
+
+	o.clientName = clientName
+
+	return nil
+}
+
 func (o Order) GetTotalPrice() float64 {
 	var sum float64
 	for _, p := range o.productList {

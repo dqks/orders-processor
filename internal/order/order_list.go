@@ -4,12 +4,17 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	appErrors "orders-processor/internal/apperrors"
+	"orders-processor/internal/apperrors"
 )
 
 type OrderList struct {
 	orderItems []Order
 	nextId     int
+}
+
+// Возвращаю не указатели  а просто слайс и можно будет менять из вне
+func (ol *OrderList) Orders() []Order {
+	return ol.orderItems
 }
 
 func (ol *OrderList) GetOrderByID(id int) (*Order, error) {
@@ -21,7 +26,7 @@ func (ol *OrderList) GetOrderByID(id int) (*Order, error) {
 			return &ol.orderItems[i], nil
 		}
 	}
-	return nil, fmt.Errorf("Заказ по заданному id не найден: %w", appErrors.ErrOrderNotFound)
+	return nil, fmt.Errorf("Заказ по заданному id не найден: %w", apperrors.ErrOrderNotFound)
 }
 
 func (ol *OrderList) Store(clientName string, productList []Product, status string) error {
@@ -45,7 +50,7 @@ func (ol OrderList) Print(w io.Writer) {
 func (ol *OrderList) GetOrderPriceByID(id int) (float64, error) {
 	foundOrder, err := ol.GetOrderByID(id)
 
-	if errors.Is(err, appErrors.ErrOrderNotFound) || err != nil {
+	if errors.Is(err, apperrors.ErrOrderNotFound) || err != nil {
 		return 0, err
 	}
 
@@ -66,7 +71,7 @@ func (ol OrderList) GetOrdersByIDs(ids []int) []*Order {
 
 	for id := range ids {
 		order, err := ol.GetOrderByID(id)
-		if !errors.Is(err, appErrors.ErrOrderNotFound) && err == nil {
+		if !errors.Is(err, apperrors.ErrOrderNotFound) && err == nil {
 			orders = append(orders, order)
 		}
 	}
