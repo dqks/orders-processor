@@ -13,9 +13,9 @@ func main() {
 		panic(err)
 	}
 	orders := orderList.GetOrdersByIDs([]int{1, 2, 3, 4, 5})
-	worker.ProcessByWorkers[order.Order, error](
+	worker.ProcessByWorkers(
 		3,
 		orders,
 		services.ProcessOrders,
-		services.ProcessOrderResult)
+		services.ProcessOrderResult())
 }

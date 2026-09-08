@@ -6,7 +6,12 @@ import (
 	"sync"
 )
 
-func ProcessOrders(ordersChan <-chan *order.Order, resultChan chan<- error, n int, wg *sync.WaitGroup) {
+type ProcessResult struct {
+	Completed bool
+	TotalSum  float64
+}
+
+func ProcessOrders(ordersChan <-chan *order.Order, resultChan chan<- ProcessResult, n int, wg *sync.WaitGroup) {
 	defer wg.Done()
 	// orderChan ожидает либо новые данные, либо закрытие канала
 	// Канал должен закрываться там, где в него отдают данные
@@ -21,10 +26,10 @@ func ProcessOrders(ordersChan <-chan *order.Order, resultChan chan<- error, n in
 		if err != nil {
 			errStatus := o.SetStatus("error")
 			if errStatus != nil {
-				resultChan <- errStatus
+				resultChan <- ProcessResult{Completed: false, TotalSum: 0}
 				fmt.Printf("Worker %d не смог обработать заказ #%d\n", n, id)
 			} else {
-				resultChan <- err
+				resultChan <- ProcessResult{Completed: false, TotalSum: 0}
 				fmt.Printf("Worker %d не смог обработать заказ #%d\n", n, id)
 			}
 		}
@@ -32,16 +37,28 @@ func ProcessOrders(ordersChan <-chan *order.Order, resultChan chan<- error, n in
 		if err == nil {
 			errStatus := o.SetStatus("completed")
 			if errStatus != nil {
-				resultChan <- errStatus
+				resultChan <- ProcessResult{Completed: false, TotalSum: 0}
 				fmt.Printf("Worker %d не смог обработать заказ #%d\n", n, id)
 			} else {
-				resultChan <- nil
+				resultChan <- ProcessResult{Completed: true, TotalSum: o.GetTotalPrice()}
 				fmt.Printf("Worker %d закончил обработку заказа #%d, его итоговая сумма %.2f\n", n, id, o.GetTotalPrice())
 			}
 		}
 	}
 }
 
-func ProcessOrderResult(err error) {
-	fmt.Println(err)
+func ProcessOrderResult() func(res ProcessResult, opened bool) {
+	stats := make(map[string]float64)
+	return func(res ProcessResult, opened bool) {
+		if res.Completed {
+			stats["completed"] = stats["completed"] + 1
+			stats["totalSum"] = stats["totalSum"] + res.TotalSum
+
+		} else if !res.Completed && opened {
+			stats["failed"] = stats["failed"] + 1
+		}
+		if !opened {
+			fmt.Println(stats)
+		}
+	}
 }

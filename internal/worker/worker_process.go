@@ -12,7 +12,7 @@ func ProcessByWorkers[J any, R any](
 	workerNum int,
 	jobs []*J,
 	processJobCb func(<-chan *J, chan<- R, int, *sync.WaitGroup),
-	processResultCb func(R)) {
+	processResultCb func(R, bool)) {
 
 	if workerNum <= 0 {
 		return
@@ -57,7 +57,13 @@ func ProcessByWorkers[J any, R any](
 		// Получатель (консьюмер) никогда не закрывает канал, из которого читает.
 	}()
 
-	for result := range resultChan {
-		processResultCb(result)
+	for {
+		result, opened := <-resultChan
+		if opened {
+			processResultCb(result, opened)
+		} else {
+			processResultCb(result, opened)
+			break
+		}
 	}
 }
